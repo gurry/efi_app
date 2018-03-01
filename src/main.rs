@@ -14,7 +14,7 @@ extern crate compiler_builtins;
 extern crate efi;
 
 use efi::ffi;
-use efi::{boot_services::BootServices, protocols::PxeBaseCodeProtocol, EfiSystemTable};
+use efi::{boot_services::BootServices, protocols::{PxeBaseCodeProtocol, BootType, BOOT_LAYER_INITIAL, DiscoverInfo}, EfiSystemTable};
 use core::fmt::Write;
 
 #[no_mangle]
@@ -62,6 +62,8 @@ pub extern "win64" fn efi_start(_image_handle: ffi::EFI_HANDLE,
     unsafe {
         let bs = (*sys_table).BootServices;
         let bs = BootServices::from(bs);
+
+        // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequencem especially the method PxeBcDiscoverBootFile
         let pxe_protocol = bs.locate_protocol::<PxeBaseCodeProtocol>();
         if let Err(e) = pxe_protocol {
                 write!(c, "failed: {}\r\n", e);
@@ -73,10 +75,17 @@ pub extern "win64" fn efi_start(_image_handle: ffi::EFI_HANDLE,
         write!(c, "Starting Pxe\r\n");
         pxe_protocol.start(false);
 
-        write!(c, "Started Pxe\r\n");
+        write!(c, "Starting DHCP\r\n");
         match pxe_protocol.dhcp(false) {
-            Ok(_) => write!(c, "Dhcp succeeded\r\n"),
+            Ok(r) => { write!(c, "Dhcp succeeded\r\n");
+                    write!(c, "{:?}, {:?}, {:?}", pxe_protocol.mode().dhcp_discover().as_dhcpv4().bootp_opcode(), pxe_protocol.mode().pxe_reply_received(), pxe_protocol.mode().pxe_discover_valid()) },
             Err(e) => write!(c, "Dhcp failed: {:?}\r\n", e),
+        };
+
+        write!(c, "Starting Discover\r\n");
+        match pxe_protocol.discover(BootType::Bootstrap, BOOT_LAYER_INITIAL, false, None) {
+            Ok(_) => write!(c, "Discover succeeded\r\n"),
+            Err(e) => write!(c, "Discover failed: {:?}\r\n", e),
         };
     }
 
