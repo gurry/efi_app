@@ -14,7 +14,7 @@ extern crate compiler_builtins;
 extern crate efi;
 
 use efi::ffi;
-use efi::{boot_services::BootServices, protocols::{PxeBaseCodeProtocol, BootType, BOOT_LAYER_INITIAL, DiscoverInfo}, EfiSystemTable};
+use efi::{protocols::{PxeBaseCodeProtocol, BootType, BOOT_LAYER_INITIAL, DiscoverInfo, SrvListEntry}, SystemTable, IpAddress};
 use core::fmt::Write;
 
 #[no_mangle]
@@ -50,44 +50,54 @@ fn start(_main: *const u8, _argc: isize, _argv: *const *const u8) -> isize {
     0
 }
 
-enum Void {}
-
 #[no_mangle]
 pub extern "win64" fn efi_start(_image_handle: ffi::EFI_HANDLE,
                                 sys_table : *const ffi::EFI_SYSTEM_TABLE) -> isize {
-    let sys_table2 = EfiSystemTable(sys_table);
-    let mut c = sys_table2.console();
-    write!(c, "Hello from UEFI motherfucker\r\n");
+    let sys_table = SystemTable(sys_table);
+    let mut c = sys_table.console();
+    write!(c, "Hello from UEFI\r\n");
 
-    unsafe {
-        let bs = (*sys_table).BootServices;
-        let bs = BootServices::from(bs);
+    let bs = sys_table.boot_services();
 
-        // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequencem especially the method PxeBcDiscoverBootFile
-        let pxe_protocol = bs.locate_protocol::<PxeBaseCodeProtocol>();
-        if let Err(e) = pxe_protocol {
-                write!(c, "failed: {}\r\n", e);
-                return 0;
-        }
+    // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequencem especially the method PxeBcDiscoverBootFile
+    let pxe_protocol = bs.locate_protocol::<PxeBaseCodeProtocol>();
+    if let Err(e) = pxe_protocol {
+            write!(c, "failed: {}\r\n", e);
+            return 0;
+    }
 
-        let pxe_protocol = pxe_protocol.unwrap();
+    let pxe_protocol = pxe_protocol.unwrap();
 
+    if !pxe_protocol.mode().started() {
         write!(c, "Starting Pxe\r\n");
         pxe_protocol.start(false);
-
-        write!(c, "Starting DHCP\r\n");
-        match pxe_protocol.dhcp(false) {
-            Ok(r) => { write!(c, "Dhcp succeeded\r\n");
-                    write!(c, "{:?}, {:?}, {:?}", pxe_protocol.mode().dhcp_discover().as_dhcpv4().bootp_opcode(), pxe_protocol.mode().pxe_reply_received(), pxe_protocol.mode().pxe_discover_valid()) },
-            Err(e) => write!(c, "Dhcp failed: {:?}\r\n", e),
-        };
-
-        write!(c, "Starting Discover\r\n");
-        match pxe_protocol.discover(BootType::Bootstrap, BOOT_LAYER_INITIAL, false, None) {
-            Ok(_) => write!(c, "Discover succeeded\r\n"),
-            Err(e) => write!(c, "Discover failed: {:?}\r\n", e),
-        };
     }
+    else {
+        write!(c, "Pxe already started\r\n");
+    }
+
+    write!(c, "Starting DHCP\r\n");
+    match pxe_protocol.dhcp(false) {
+        Ok(r) => { write!(c, "Dhcp succeeded\r\n");
+                write!(c, "{:?}, {:?}, {:?}\r\n", pxe_protocol.mode().proxy_offer().as_dhcpv4().bootp_opcode(), pxe_protocol.mode().proxy_offer_received(), pxe_protocol.mode().pxe_discover_valid()) },
+        Err(e) => write!(c, "Dhcp failed: {:?}\r\n", e),
+    };
+
+    let info = DiscoverInfo::default();
+    write!(c, "Starting Discover\r\n");
+    match pxe_protocol.discover(BootType::Bootstrap, BOOT_LAYER_INITIAL, false, Some(&info)) {
+        Ok(_) =>  { 
+                    write!(c, "Discover succeeded\r\n");
+                    write!(c, "Boot file:\r\n");
+                    let boot_file = pxe_protocol.mode().proxy_offer().as_dhcpv4().bootp_boot_file();
+                    for ch in boot_file.iter() {
+                        write!(c, "{}", *ch as char);
+                    }
+                    write!(c, "\r\n")
+                },
+
+        Err(e) => write!(c, "Discover failed: {:?}\r\n", e),
+    };
 
     0
 }
