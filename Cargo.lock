@@ -1,4 +1,9 @@
 [[package]]
+name = "bitflags"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "compiler_builtins"
 version = "0.1.0"
 source = "git+https://github.com/rust-lang-nursery/compiler-builtins#266ea0740a5bdd262a38bbd88fb55fc3d2a7a96e"
@@ -7,6 +12,7 @@ source = "git+https://github.com/rust-lang-nursery/compiler-builtins#266ea0740a5
 name = "efi"
 version = "0.1.0"
 dependencies = [
+ "bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -80,6 +86,7 @@ version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
+"checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
 "checksum compiler_builtins 0.1.0 (git+https://github.com/rust-lang-nursery/compiler-builtins)" = "<none>"
 "checksum failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "934799b6c1de475a012a02dab0ace1ace43789ee4b99bcfbf1a2e3e8ced5de82"
 "checksum failure_derive 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c7cdda555bb90c9bb67a3b670a0f42de8e73f5981524123ad8578aafec8ddb8b"

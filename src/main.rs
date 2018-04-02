@@ -14,8 +14,25 @@ extern crate compiler_builtins;
 extern crate efi;
 
 use efi::ffi;
-use efi::{protocols::{PxeBaseCodeProtocol, BootType, BOOT_LAYER_INITIAL, DiscoverInfo, SrvListEntry}, SystemTable, IpAddress};
+use efi::{
+    protocols::{
+        PxeBaseCodeProtocol, 
+        LoadFileProtocol, 
+        LoadedImageProtocol,
+        BootType, 
+        BOOT_LAYER_INITIAL, 
+        DiscoverInfo, 
+        SrvListEntry
+    },
+    boot_services::InterfaceType,
+    SystemTable,
+    net,
+    init_env,
+    io
+};
+
 use core::fmt::Write;
+
 
 #[no_mangle]
 #[lang="panic_fmt"]
@@ -51,15 +68,19 @@ fn start(_main: *const u8, _argc: isize, _argv: *const *const u8) -> isize {
 }
 
 #[no_mangle]
-pub extern "win64" fn efi_start(_image_handle: ffi::EFI_HANDLE,
+pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
                                 sys_table : *const ffi::EFI_SYSTEM_TABLE) -> isize {
+
+    init_env(image_handle, sys_table);
     let sys_table = SystemTable(sys_table);
     let mut c = sys_table.console();
+
     write!(c, "Hello from UEFI\r\n");
 
-    let bs = sys_table.boot_services();
+    let mut bs = sys_table.boot_services();
 
-    // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequencem especially the method PxeBcDiscoverBootFile
+    write!(c, "Testing DHCP/PXE\r\n");
+    // // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequence especially the method PxeBcDiscoverBootFile
     let pxe_protocol = bs.locate_protocol::<PxeBaseCodeProtocol>();
     if let Err(e) = pxe_protocol {
             write!(c, "failed: {}\r\n", e);
@@ -99,5 +120,40 @@ pub extern "win64" fn efi_start(_image_handle: ffi::EFI_HANDLE,
         Err(e) => write!(c, "Discover failed: {:?}\r\n", e),
     };
 
-    0
+
+    write!(c, "Testing TCP4\r\n");
+    let remote_ip = net::Ipv4Addr::new(10, 1, 10, 17);
+    let remote_port = 1000;
+
+    write!(c, "Connecting to {:?}:{}...\r\n", remote_ip, remote_port);
+
+    net::Tcp4Stream::connect(net::SocketAddrV4::new(remote_ip, remote_port))
+        .and_then(|mut stream| {
+            write!(c, "Connected!\r\n").unwrap();
+            let hello = "Hello";
+            let mut bytes = hello.bytes();
+
+            let buf = [bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap()];
+
+            use io::Write;
+
+            stream.write(&buf)
+        })
+        .or_else(|e| {
+            write!(c, "Got status code: {:?}\r\n", e);
+            Err(3)
+        });
+
+    write!(c, "Data sent\r\n");
+
+    
+    write!(c, "Testing vec and allocator\r\n");
+    let mut v = efi::Vec::new();
+    v.push(3);
+    v.push(4);
+    v.push(8);
+
+    write!(c, "Vec created: {:?} - Capacity: {}\r\n", v, v.capacity());
+
+   0
 }
