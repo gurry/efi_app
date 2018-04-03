@@ -137,14 +137,15 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
 
             use io::Write;
 
-            stream.write(&buf)
+            stream.write(&buf);
+            write!(c, "Data sent\r\n");
+            Ok(())
         })
         .or_else(|e| {
             write!(c, "Got status code: {:?}\r\n", e);
             Err(3)
         });
 
-    write!(c, "Data sent\r\n");
 
     
     write!(c, "Testing vec and allocator\r\n");
