@@ -130,11 +130,7 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
     net::Tcp4Stream::connect(net::SocketAddrV4::new(remote_ip, remote_port))
         .and_then(|mut stream| {
             write!(c, "Connected!\r\n").unwrap();
-            let hello = "Hello";
-            let mut bytes = hello.bytes();
-
-            let buf = [bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap(), bytes.next().unwrap()];
-
+            let buf = "Hello".as_bytes();
             use io::Write;
 
             stream.write(&buf);
