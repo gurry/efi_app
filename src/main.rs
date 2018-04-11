@@ -12,6 +12,7 @@ extern "C" {}
 extern crate rlibc;
 extern crate compiler_builtins;
 extern crate efi;
+extern crate http_efi;
 
 use efi::ffi;
 use efi::{
@@ -31,8 +32,12 @@ use efi::{
     io
 };
 
-use core::fmt::Write;
+use http_efi::Client;
 
+use core::fmt::Write;
+use efi::io::Read;
+
+use http_efi::Header;
 
 #[no_mangle]
 #[lang="panic_fmt"]
@@ -52,9 +57,9 @@ pub fn breakpoint() -> ! {
 	loop {}
 }
 
+
 #[no_mangle]
-pub fn __chkstk() -> ! {
-	loop {}
+pub unsafe fn __chkstk() {
 }
 
 // Must have a main to satisfy rustc
@@ -80,7 +85,7 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
     let mut bs = sys_table.boot_services();
 
     write!(c, "Testing DHCP/PXE\r\n");
-    // // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequence especially the method PxeBcDiscoverBootFile
+    // TODO: see tianocore-edk2\NetworkPkg\UefiPxeBcDxe\PxeBcBoot.c file to know to implement PXE sequence especially the method PxeBcDiscoverBootFile
     let pxe_protocol = bs.locate_protocol::<PxeBaseCodeProtocol>();
     if let Err(e) = pxe_protocol {
             write!(c, "failed: {}\r\n", e);
@@ -88,6 +93,9 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
     }
 
     let pxe_protocol = pxe_protocol.unwrap();
+
+    let sp = core::mem::size_of::<PxeBaseCodeProtocol>();
+    write!(c, "PXE size: {}\r\n", sp);
 
     if !pxe_protocol.mode().started() {
         write!(c, "Starting Pxe\r\n");
@@ -99,12 +107,15 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
 
     write!(c, "Starting DHCP\r\n");
     match pxe_protocol.dhcp(false) {
-        Ok(r) => { write!(c, "Dhcp succeeded\r\n");
-                write!(c, "{:?}, {:?}, {:?}\r\n", pxe_protocol.mode().proxy_offer().as_dhcpv4().bootp_opcode(), pxe_protocol.mode().proxy_offer_received(), pxe_protocol.mode().pxe_discover_valid()) },
+        Ok(r) => { write!(c, "Dhcp succeeded\r\n") },
+                // write!(c, "{:?}, {:?}, {:?}\r\n", pxe_protocol.mode().proxy_offer().as_dhcpv4().bootp_opcode(), pxe_protocol.mode().proxy_offer_received(), pxe_protocol.mode().pxe_discover_valid()) },
         Err(e) => write!(c, "Dhcp failed: {:?}\r\n", e),
     };
 
     let info = DiscoverInfo::default();
+    let dp = core::mem::size_of::<DiscoverInfo>();
+    write!(c, "DiscoverInfo size: {}\r\n", dp);
+
     write!(c, "Starting Discover\r\n");
     match pxe_protocol.discover(BootType::Bootstrap, BOOT_LAYER_INITIAL, false, Some(&info)) {
         Ok(_) =>  { 
@@ -121,36 +132,59 @@ pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
     };
 
 
-    write!(c, "Testing TCP4\r\n");
-    let remote_ip = net::Ipv4Addr::new(10, 1, 10, 17);
-    let remote_port = 1000;
+    // write!(c, "Testing TCP4\r\n");
+    // let remote_ip = net::Ipv4Addr::new(10, 1, 10, 11);
+    // let remote_port = 8000;
 
-    write!(c, "Connecting to {:?}:{}...\r\n", remote_ip, remote_port);
+    // write!(c, "Connecting to {:?}:{}...\r\n", remote_ip, remote_port);
 
-    net::Tcp4Stream::connect(net::SocketAddrV4::new(remote_ip, remote_port))
-        .and_then(|mut stream| {
-            write!(c, "Connected!\r\n").unwrap();
-            let buf = "Hello".as_bytes();
-            use io::Write;
+    // let tp = core::mem::size_of::<DiscoverInfo>();
+    // write!(c, "Tcp4Stream size: {}\r\n", tp);
 
-            stream.write(&buf);
-            write!(c, "Data sent\r\n");
-            Ok(())
-        })
-        .or_else(|e| {
-            write!(c, "Got status code: {:?}\r\n", e);
-            Err(3)
-        });
+    // net::Tcp4Stream::connect(net::SocketAddrV4::new(remote_ip, remote_port))
+    //     .and_then(|mut stream| {
+    //         write!(c, "Connected!\r\n").unwrap();
+    //         let buf = "GET / HTTP/1.1\r\n".as_bytes();
+    //         use io::Write;
+
+    //         stream.write(&buf);
+    //         stream.write("Content-Length: 0\r\n".as_bytes());
+    //         stream.write("\r\n".as_bytes());
+
+    //         write!(c, "Data sent\r\n");
+
+    //         write!(c, "Received response: ");
+    //         let mut rbuf = [0; 1024];
+    //         let mut rbuf = efi::Vec::new();
+    //         stream.read_to_end(&mut rbuf);
+
+    //         for ch in rbuf.iter() {
+    //             write!(c, "{}", *ch as char);
+    //         }
+
+    //         Ok(())
+    //     })
+    //     .or_else(|e| {
+    //         write!(c, "Got status code: {:?}\r\n", e);
+    //         Err(3)
+    //     });
 
 
+    write!(c, "Testing HTTP\r\n");
     
-    write!(c, "Testing vec and allocator\r\n");
-    let mut v = efi::Vec::new();
-    v.push(3);
-    v.push(4);
-    v.push(8);
+    let remote_ip = net::Ipv4Addr::new(10, 1, 10, 11);
+    let remote_port = 8000;
 
-    write!(c, "Vec created: {:?} - Capacity: {}\r\n", v, v.capacity());
+    let sa = net::SocketAddrV4::new(remote_ip, remote_port);
+
+    match Client::connect(sa) {
+        Ok(mut client) => {
+            write!(c, "HTTP client connected!\r\n").unwrap();
+            let headers = [ Header { name: "Range", value: "bytes=0-10".as_bytes() } ];
+            let resp = client.request("GET", "/Cargo.toml", &headers, None).unwrap();
+        },
+        Err(e) => write!(c, "Got status code: {:?}\r\n", e).unwrap()
+    }
 
    0
 }
