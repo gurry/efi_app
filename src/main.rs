@@ -166,14 +166,14 @@ fn run(sys_table: &mut SystemTable) -> Result<(), String> {
                             println!("{}", body);
                         }
                     },
-                    Err(e) => { return Err(format!("Http client failed to connect - {}", e))},
+                    Err(e) => { return Err(format!("Http client failed to send request - {}", e))},
                 };
 
                 offset += req_size;
             }
             println!("");
         },
-        Err(e) => println!("Got status code: {:?}", e)
+        Err(e) => return Err(format!("Failed to connect - {}", e))
     }
 
     Ok(())
