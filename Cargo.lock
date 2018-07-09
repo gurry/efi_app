@@ -1,9 +1,4 @@
 [[package]]
-name = "bitflags"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
 name = "byteorder"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16,9 +11,8 @@ source = "git+https://github.com/rust-lang-nursery/compiler-builtins#cb04a0718b2
 [[package]]
 name = "efi"
 version = "0.1.0"
-source = "git+https://github.com/gurry/efi#82fecba3dd87cb3f306160e35b3a1bf65c973855"
+source = "git+https://github.com/gurry/efi#8c051bd37d4bb916e79812fd5b5574f5c69dc39b"
 dependencies = [
- "bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -29,7 +23,6 @@ version = "0.1.0"
 dependencies = [
  "compiler_builtins 0.1.0 (git+https://github.com/rust-lang-nursery/compiler-builtins)",
  "efi 0.1.0 (git+https://github.com/gurry/efi)",
- "http_efi 0.1.0 (git+https://github.com/gurry/http_efi)",
  "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -50,21 +43,6 @@ dependencies = [
  "syn 0.11.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "synstructure 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "http_efi"
-version = "0.1.0"
-source = "git+https://github.com/gurry/http_efi#4e10fa227624a9168556f59dc1ff2c9e62dc6f8e"
-dependencies = [
- "efi 0.1.0 (git+https://github.com/gurry/efi)",
- "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "httparse 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "httparse"
-version = "1.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "quote"
@@ -109,14 +87,11 @@ version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
-"checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
 "checksum byteorder 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "74c0b906e9446b0a2e4f760cdb3fa4b2c48cdc6db8766a845c54b6ff063fd2e9"
 "checksum compiler_builtins 0.1.0 (git+https://github.com/rust-lang-nursery/compiler-builtins)" = "<none>"
 "checksum efi 0.1.0 (git+https://github.com/gurry/efi)" = "<none>"
 "checksum failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "934799b6c1de475a012a02dab0ace1ace43789ee4b99bcfbf1a2e3e8ced5de82"
 "checksum failure_derive 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c7cdda555bb90c9bb67a3b670a0f42de8e73f5981524123ad8578aafec8ddb8b"
-"checksum http_efi 0.1.0 (git+https://github.com/gurry/http_efi)" = "<none>"
-"checksum httparse 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "c2f407128745b78abc95c0ffbe4e5d37427fdc0d45470710cfef8c44522a2e37"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
 "checksum rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
 "checksum syn 0.11.11 (registry+https://github.com/rust-lang/crates.io-index)" = "d3b891b9015c88c576343b9b3e41c2c11a51c219ef067b264bd9c8aa9b441dad"

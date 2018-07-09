@@ -7,9 +7,3 @@ authors = ["Gurinder Singh <frederick.the.fool@gmail.com>"]
 rlibc = "1.0"
 compiler_builtins = { git = "https://github.com/rust-lang-nursery/compiler-builtins" }
 efi = { git = "https://github.com/gurry/efi" }
-# efi = { path = "../efi" }
-http_efi = { git = "https://github.com/gurry/http_efi" }
-# http_efi = { path = "../http_efi" }
-
-# [target.x86_64-pc-efi]
-# linker = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\VC\\Tools\\MSVC\\14.12.25827\\bin\\Hostx86\\x86\\link.exe"
