@@ -1,6 +1,6 @@
 # efi_app
 
-A sample UEFI application written in Rust.
+A sample UEFI application written in Rust using [`efi`](https://github.com/gurry/efi) crate.
 
 ## Building
 
