@@ -5,7 +5,6 @@
 #![feature(link_args)]
 #![feature(compiler_builtins_lib)]
 #![feature(alloc)]
-#![feature(nll)]
 
 #[allow(unused_attributes)] // The below attribute is needed to specify the entry point. Hence suppressing the warning
 #[link_args = "/ENTRY:efi_start"]
