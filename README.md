@@ -4,7 +4,7 @@ A sample UEFI application written in Rust using the [`efi`](https://github.com/g
 
 ## Building
 
-This crate can build only on Windows. Building on non-Windows OS's can be done, but will require a lot of manual effort. Also currently on x64 build has been tested. It may not build for other CPU architectures (like x86).
+This crate can build only on Windows. Building on non-Windows OS's can be done, but will require a lot of manual effort. Also currently only x64 build has been tested. It may not build for other CPU architectures (like x86).
 
 To build follow the below steps:
 
