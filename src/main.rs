@@ -45,7 +45,7 @@ fn run(_sys_table: &mut SystemTable) -> Result<(), String> {
     println!("Hello from UEFI");
     println!("");
 
-    let mut pxe_protocols = net::pxebc::PxeBaseCodeProtocol::get_all_mut()
+    let pxe_protocols = net::pxebc::PxeBaseCodeProtocol::get_all_mut()
             .map_err(|_| "error while locating PXE protocols")?;
     
     let pxe_protocol = &pxe_protocols[0];
