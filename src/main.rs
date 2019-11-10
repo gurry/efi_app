@@ -1,17 +1,15 @@
 #![no_std]
+#![no_main]
 #![feature(intrinsics)]
 #![feature(asm)]
 #![feature(lang_items)]
 #![feature(link_args)]
-#![feature(compiler_builtins_lib)]
-#![feature(alloc)]
+#![feature(alloc_error_handler)]
 
 #[allow(unused_attributes)] // The below attribute is needed to specify the entry point. Hence suppressing the warning
 #[link_args = "/ENTRY:efi_start"]
 extern "C" {}
 
-extern crate rlibc;
-extern crate compiler_builtins;
 #[macro_use] extern crate efi;
 #[macro_use] extern crate alloc;
 
@@ -24,8 +22,8 @@ use efi::{
     EfiErrorKind,
 };
 
-use alloc::String;
-use core::str;
+use alloc::string::String;
+use core::panic::PanicInfo;
 
 
 // EFI entry point. This function is the one that the UEFI platform calls when this image is loaded.
@@ -47,12 +45,17 @@ fn run(_sys_table: &mut SystemTable) -> Result<(), String> {
     println!("Hello from UEFI");
     println!("");
 
-    if net::dhcp::cached_dhcp_config().unwrap_or(None).is_none() { // If there's cached config then DHCP has already happend. Otherwise we start it.
+    let mut pxe_protocols = net::pxebc::PxeBaseCodeProtocol::get_all_mut()
+            .map_err(|_| "error while locating PXE protocols")?;
+    
+    let pxe_protocol = &pxe_protocols[0];
+    
+    if pxe_protocol.cached_dhcp_config().unwrap_or(None).is_none() { // If there's cached config then DHCP has already happend. Otherwise we start it.
         println!("Performing DHCP...");
-        let dhcp_config = net::dhcp::run_dhcp().map_err(|e| format!("Dhcp failed - {}", e))?;
+        let dhcp_config = pxe_protocol.run_dhcp().map_err(|e| format!("Dhcp failed - {}", e))?;
 
         println!("    Your IP: {}, Subnet mask: {}", dhcp_config.ip(), dhcp_config.subnet_mask());
-        if let Some(server_ip) =  dhcp_config.dhcp_server_ip() {
+        if let Some(server_ip) =  dhcp_config.dhcp_server_addr() {
             println!("    Server IP: {}", server_ip);
         }
     }
@@ -105,11 +108,21 @@ fn run(_sys_table: &mut SystemTable) -> Result<(), String> {
 }
 
 //---- The below code is required to make Rust compiler happy. Without it compilation will fail. ---- //
-#[no_mangle]
-#[lang="panic_fmt"]
-pub extern fn panic_fmt(_: ::core::fmt::Arguments, _: &'static str, _: u32) -> ! {
+#[panic_handler]
+fn panic(_panic: &PanicInfo) -> ! {
     loop {}
 }
+
+#[alloc_error_handler]
+fn foo(_: core::alloc::Layout) -> ! {
+    loop {}
+}
+
+// #[no_mangle]
+// #[lang="panic_fmt"]
+// pub extern fn panic_fmt(_: ::core::fmt::Arguments, _: &'static str, _: u32) -> ! {
+//     loop {}
+// }
 
 #[lang = "eh_personality"] #[no_mangle] pub extern fn eh_personality() {}
 
@@ -126,10 +139,6 @@ pub fn breakpoint() -> ! {
 
 #[no_mangle]
 pub unsafe fn __chkstk() {
-}
-
-// Must have a main to satisfy rustc
-fn main() {
 }
 
 // Must have a start as well to satisfy rustc
