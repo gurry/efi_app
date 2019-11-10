@@ -117,32 +117,3 @@ fn panic(_panic: &PanicInfo) -> ! {
 fn foo(_: core::alloc::Layout) -> ! {
     loop {}
 }
-
-// #[no_mangle]
-// #[lang="panic_fmt"]
-// pub extern fn panic_fmt(_: ::core::fmt::Arguments, _: &'static str, _: u32) -> ! {
-//     loop {}
-// }
-
-#[lang = "eh_personality"] #[no_mangle] pub extern fn eh_personality() {}
-
-#[no_mangle]
-pub fn abort() -> ! {
-	loop {}
-}
-
-#[no_mangle]
-pub fn breakpoint() -> ! {
-	loop {}
-}
-
-
-#[no_mangle]
-pub unsafe fn __chkstk() {
-}
-
-// Must have a start as well to satisfy rustc
-#[lang = "start"]
-fn start(_main: *const u8, _argc: isize, _argv: *const *const u8) -> isize {
-    0
-}
