@@ -114,6 +114,6 @@ fn panic(_panic: &PanicInfo) -> ! {
 }
 
 #[alloc_error_handler]
-fn foo(_: core::alloc::Layout) -> ! {
+fn alloc_error(_: core::alloc::Layout) -> ! {
     loop {}
 }
