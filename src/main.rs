@@ -7,7 +7,6 @@
 #![feature(alloc_error_handler)]
 
 #[allow(unused_attributes)] // The below attribute is needed to specify the entry point. Hence suppressing the warning
-#[link_args = "/ENTRY:efi_start"]
 extern "C" {}
 
 #[macro_use] extern crate efi;
@@ -28,7 +27,7 @@ use core::panic::PanicInfo;
 
 // EFI entry point. This function is the one that the UEFI platform calls when this image is loaded.
 #[no_mangle]
-pub extern "win64" fn efi_start(image_handle: ffi::EFI_HANDLE,
+pub extern "win64" fn efi_main(image_handle: ffi::EFI_HANDLE,
                                 sys_table : *const ffi::EFI_SYSTEM_TABLE) -> isize {
 
     init_env(image_handle, sys_table);
