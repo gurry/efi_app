@@ -1,13 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(intrinsics)]
-#![feature(asm)]
-#![feature(lang_items)]
-#![feature(link_args)]
 #![feature(alloc_error_handler)]
-
-#[allow(unused_attributes)] // The below attribute is needed to specify the entry point. Hence suppressing the warning
-extern "C" {}
 
 #[macro_use] extern crate efi;
 #[macro_use] extern crate alloc;
